@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -23,7 +24,10 @@
         <button class="nav-btn" data-page="speech">Speech to Text</button>
         <button class="nav-btn" data-page="tts">Text to Speech</button>
         <button class="nav-btn" data-page="translate">Translation</button>
+        <button class="nav-btn" data-page="pronounce">Pronunciation</button>
+        <button class="nav-btn" data-page="voiceLab">Voice Lab</button>
         <button class="nav-btn" data-page="upload">File Upload</button>
+        <button class="nav-btn" data-page="history">History</button>
         <button class="nav-btn" data-page="settings">Settings</button>
       </nav>
 
@@ -49,34 +53,25 @@
         <div class="hero card glass">
           <div>
             <p class="eyebrow">Welcome back</p>
-            <h3>Convert speech into live text with Azure Speech Services</h3>
-            <p class="muted">Add your Azure key and region in Settings, then use the Speech page for live transcription.</p>
+            <h3>Convert speech into live text, voice, and translations with Azure Speech Services</h3>
+            <p class="muted">Configure Azure in Settings, then use live speech, translation, TTS, pronunciation, and voice styles.</p>
           </div>
           <div class="hero-bg"></div>
         </div>
 
         <div class="stats-grid">
-          <div class="card stat-card">
-            <span>Sessions</span>
-            <strong id="statSessions">0</strong>
-          </div>
-          <div class="card stat-card">
-            <span>Words</span>
-            <strong id="statWords">0</strong>
-          </div>
-          <div class="card stat-card">
-            <span>WPM</span>
-            <strong id="statWpm">0</strong>
-          </div>
-          <div class="card stat-card">
-            <span>Accuracy</span>
-            <strong id="statAccuracy">—</strong>
-          </div>
+          <div class="card stat-card"><span>Sessions</span><strong id="statSessions">0</strong></div>
+          <div class="card stat-card"><span>Words</span><strong id="statWords">0</strong></div>
+          <div class="card stat-card"><span>WPM</span><strong id="statWpm">0</strong></div>
+          <div class="card stat-card"><span>Accuracy</span><strong id="statAccuracy">—</strong></div>
         </div>
 
         <div class="grid-2">
           <div class="card glass">
-            <h3>Recent transcripts</h3>
+            <div class="section-head">
+              <h3>Recent transcripts</h3>
+              <button class="ghost-btn mini" id="clearRecentBtn">Clear</button>
+            </div>
             <div id="recentTranscripts" class="list"></div>
           </div>
 
@@ -86,6 +81,8 @@
               <button class="action-btn" data-page="speech">Open live speech page</button>
               <button class="action-btn" data-page="tts">Generate voice from text</button>
               <button class="action-btn" data-page="translate">Translate speech live</button>
+              <button class="action-btn" data-page="pronounce">Practice pronunciation</button>
+              <button class="action-btn" data-page="voiceLab">Open Voice Lab</button>
               <button class="action-btn" data-page="settings">Configure Azure settings</button>
             </div>
           </div>
@@ -108,19 +105,30 @@
           <div class="controls">
             <button class="primary-btn" id="startMicBtn">Start Mic</button>
             <button class="danger-btn" id="stopMicBtn" disabled>Stop Mic</button>
+            <button class="ghost-btn" id="copyTranscriptBtn">Copy</button>
+            <button class="ghost-btn" id="downloadTxtBtn">Download TXT</button>
+            <button class="ghost-btn" id="clearTranscriptBtn">Clear</button>
           </div>
 
-          <div class="waveform" id="waveform">
-            <span></span><span></span><span></span><span></span><span></span><span></span>
-          </div>
+          <div class="waveform" id="waveform"><span></span><span></span><span></span><span></span><span></span><span></span></div>
 
           <div class="meta-row">
             <span class="chip" id="wordCountChip">Words: 0</span>
             <span class="chip" id="wpmChip">WPM: 0</span>
             <span class="chip" id="confChip">Confidence: N/A</span>
+            <span class="chip" id="langChip">Lang: en-US</span>
           </div>
 
-          <div class="transcript-box" id="liveTranscript">Press Start Mic and speak clearly.</div>
+          <div class="split-grid">
+            <div class="panel">
+              <h4>Final transcript</h4>
+              <div class="transcript-box" id="liveTranscript">Press Start Mic and speak clearly.</div>
+            </div>
+            <div class="panel">
+              <h4>Interim text</h4>
+              <div class="transcript-box small" id="partialTranscript">Waiting for speech...</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -131,14 +139,19 @@
 
           <textarea id="ttsText" class="input" placeholder="Type text here...">Hello, this is Azure Text to Speech.</textarea>
 
-          <div class="grid-2">
+          <div class="grid-3">
             <div>
               <label>Voice</label>
               <select id="voiceSelect" class="input">
                 <option value="en-US-JennyNeural">English - Female</option>
                 <option value="en-US-GuyNeural">English - Male</option>
                 <option value="en-IN-NeerjaNeural">Hindi accent - Female</option>
+                <option value="hi-IN-MadhurNeural">Hindi - Male</option>
               </select>
+            </div>
+            <div>
+              <label>Rate</label>
+              <input id="ttsRate" class="input" type="range" min="0.5" max="2" step="0.1" value="1" />
             </div>
             <div class="tts-buttons">
               <button class="primary-btn" id="playTtsBtn">Play</button>
@@ -155,7 +168,7 @@
           <p class="eyebrow">Speech translation</p>
           <h3>Translation</h3>
 
-          <div class="grid-2">
+          <div class="grid-3">
             <div>
               <label>Source Language</label>
               <input id="sourceLang" class="input" value="en-US" />
@@ -169,12 +182,21 @@
                 <option value="es">Spanish</option>
               </select>
             </div>
+            <div>
+              <label>Mode</label>
+              <select id="translateMode" class="input">
+                <option value="live">Live microphone</option>
+                <option value="text">Translate typed text</option>
+              </select>
+            </div>
           </div>
 
           <div class="controls">
             <button class="primary-btn" id="startTranslateBtn">Start Translation</button>
             <button class="danger-btn" id="stopTranslateBtn" disabled>Stop</button>
           </div>
+
+          <textarea id="translateInput" class="input" placeholder="Type text if you want text translation mode..."></textarea>
 
           <div class="grid-2">
             <div class="panel">
@@ -186,6 +208,108 @@
               <div id="translatedText" class="transcript-box small"></div>
             </div>
           </div>
+
+          <div class="row-actions">
+            <button class="ghost-btn" id="swapLangBtn">Swap preview languages</button>
+            <button class="ghost-btn" id="speakTranslatedBtn">Speak translated text</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="pronouncePage">
+        <div class="card glass">
+          <p class="eyebrow">Practice mode</p>
+          <h3>Pronunciation Assessment</h3>
+
+          <div class="grid-2">
+            <div>
+              <label>Reference Text</label>
+              <textarea id="referenceText" class="input">The quick brown fox jumps over the lazy dog.</textarea>
+            </div>
+            <div>
+              <label>Language</label>
+              <input id="pronounceLang" class="input" value="en-US" />
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="primary-btn" id="startPronounceBtn">Start Assessment</button>
+            <button class="danger-btn" id="stopPronounceBtn" disabled>Stop</button>
+            <button class="ghost-btn" id="copyScoreBtn">Copy Score</button>
+          </div>
+
+          <div class="split-grid">
+            <div class="panel">
+              <h4>Assessment score</h4>
+              <div class="score-row"><span>Accuracy</span><strong id="scoreAccuracy">—</strong></div>
+              <div class="score-row"><span>Fluency</span><strong id="scoreFluency">—</strong></div>
+              <div class="score-row"><span>Completeness</span><strong id="scoreCompleteness">—</strong></div>
+              <div class="score-row"><span>Prosody</span><strong id="scoreProsody">—</strong></div>
+            </div>
+            <div class="panel">
+              <h4>Recognized text</h4>
+              <div id="pronounceResult" class="transcript-box small">Ready for assessment.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="voiceLabPage">
+        <div class="card glass">
+          <p class="eyebrow">Creative voices</p>
+          <h3>Voice Lab</h3>
+
+          <div class="grid-3">
+            <div>
+              <label>Preset</label>
+              <select id="voicePreset" class="input">
+                <option value="neutral">Neutral</option>
+                <option value="bollywood">Bollywood Hero</option>
+                <option value="dramatic">Dramatic Trailer</option>
+                <option value="comic">Comic/Playful</option>
+                <option value="news">News Anchor</option>
+                <option value="calm">Calm Narrator</option>
+              </select>
+            </div>
+            <div>
+              <label>Language</label>
+              <select id="voiceLang" class="input">
+                <option value="en-US">English (US)</option>
+                <option value="en-IN">English (India)</option>
+                <option value="hi-IN">Hindi</option>
+                <option value="es-ES">Spanish</option>
+                <option value="fr-FR">French</option>
+              </select>
+            </div>
+            <div>
+              <label>Voice</label>
+              <select id="voiceLabSelect" class="input">
+                <option value="en-US-GuyNeural">Guy Neural</option>
+                <option value="en-US-JennyNeural">Jenny Neural</option>
+                <option value="en-IN-PrabhatNeural">Prabhat Neural</option>
+                <option value="hi-IN-MadhurNeural">Madhur Neural</option>
+                <option value="hi-IN-SwaraNeural">Swara Neural</option>
+              </select>
+            </div>
+          </div>
+
+          <textarea id="voiceLabText" class="input">Bade maza ke saath, aaj ka cinematic announcement shuru hota hai.</textarea>
+
+          <div class="grid-3">
+            <div><label>Speed</label><input id="voiceSpeed" class="input" type="range" min="0.7" max="1.5" step="0.1" value="1"></div>
+            <div><label>Pitch</label><input id="voicePitch" class="input" type="range" min="-20" max="20" step="1" value="0"></div>
+            <div class="tts-buttons">
+              <button class="primary-btn" id="previewVoiceBtn">Preview Voice</button>
+              <button class="ghost-btn" id="randomVoiceBtn">Random Voice</button>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="ghost-btn" id="applyPresetBtn">Apply Preset</button>
+            <button class="ghost-btn" id="copySsmlBtn">Copy SSML</button>
+          </div>
+
+          <div id="voiceLabOutput" class="muted">Choose a preset and preview the voice style.</div>
         </div>
       </section>
 
@@ -193,15 +317,31 @@
         <div class="card glass">
           <p class="eyebrow">Batch processing</p>
           <h3>File Upload</h3>
-
           <input type="file" id="audioFile" class="input" accept="audio/*,video/*" />
           <div class="muted" id="fileInfo">No file selected.</div>
-
-          <div class="fake-progress">
-            <div class="fake-bar"></div>
+          <div class="fake-progress"><div class="fake-bar"></div></div>
+          <div class="controls">
+            <button class="ghost-btn" id="simulateUploadBtn">Simulate Processing</button>
+            <button class="ghost-btn" id="clearUploadBtn">Clear</button>
           </div>
+          <div class="muted" id="uploadStatus">Ready for Azure batch transcription or simulation.</div>
+        </div>
+      </section>
 
-          <div class="muted">This UI is ready for Azure batch transcription or local simulation.</div>
+      <section class="page" id="historyPage">
+        <div class="card glass">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Saved history</p>
+              <h3>Session History</h3>
+            </div>
+            <div class="row-actions">
+              <button class="ghost-btn" id="exportHistoryBtn">Export JSON</button>
+              <button class="ghost-btn" id="clearHistoryBtn">Clear All</button>
+            </div>
+          </div>
+          <input id="historySearch" class="input" placeholder="Search history..." />
+          <div id="historyList" class="list"></div>
         </div>
       </section>
 
@@ -226,14 +366,24 @@
             <input id="endpoint" class="input" placeholder="Optional endpoint" />
           </div>
 
-          <div>
-            <label>Recognition Language</label>
-            <input id="lang" class="input" placeholder="en-US" />
+          <div class="grid-2">
+            <div>
+              <label>Recognition Language</label>
+              <input id="lang" class="input" placeholder="en-US" />
+            </div>
+            <div>
+              <label>Theme</label>
+              <select id="theme" class="input">
+                <option value="dark">Dark Neon</option>
+                <option value="blue">Blue Glass</option>
+              </select>
+            </div>
           </div>
 
           <div class="controls">
             <button class="primary-btn" id="saveSettingsBtn">Save</button>
             <button class="ghost-btn" id="testSettingsBtn">Test Connection</button>
+            <button class="ghost-btn" id="fillDemoBtn">Fill Demo</button>
           </div>
 
           <div class="muted" id="settingsStatus">Settings not loaded yet.</div>
